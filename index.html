@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miracle TapTap by Chujinryeok Studio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        #game-container {
+            margin: 50px auto;
+            padding: 20px;
+            width: 300px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #click-button {
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        #score, #timer {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+
+        #leaderboard {
+            margin-top: 30px;
+        }
+
+        .leaderboard-entry {
+            margin: 5px 0;
+        }
+
+        #player-name {
+            display: none;
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Miracle TapTap</h1>
+        <div id="timer">Time left: 60s</div>
+        <button id="click-button">Tap to Score!</button>
+        <div id="score">Score: 0</div>
+
+        <div id="player-name">
+            <input type="text" id="name-input" placeholder="Enter your name" />
+            <button id="submit-name">Submit</button>
+        </div>
+
+        <div id="leaderboard">
+            <h2>Leaderboard</h2>
+            <div id="leaderboard-entries"></div>
+        </div>
+    </div>
+
+    <footer>
+        Powered by Chujinryeok Studio
+    </footer>
+
+    <script>
+        // 게임 변수
+        let score = 0;
+        let clickIncrement = 1; // 클릭당 점수 증가량
+        let timeLeft = 60; // 제한 시간 (초)
+        let timerInterval;
+        const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        const scoreThreshold = 10; // 리더보드에 추가할 점수 기준
+
+        // HTML 요소
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const leaderboardEntries = document.getElementById('leaderboard-entries');
+        const clickButton = document.getElementById('click-button');
+        const playerNameInput = document.getElementById('player-name');
+        const nameInput = document.getElementById('name-input');
+        const submitNameButton = document.getElementById('submit-name');
+
+        // 제한 시간 타이머 시작 함수
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `Time left: ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // 게임 종료 함수
+        function endGame() {
+            clickButton.disabled = true;
+            playerNameInput.style.display = 'block';
+        }
+
+        // 클릭 시 점수 증가
+        clickButton.addEventListener('click', () => {
+            if (timeLeft > 0) {
+                score += clickIncrement;
+                scoreDisplay.textContent = `Score: ${score}`;
+
+                // 점수가 증가할 때마다 난이도(클릭당 점수)도 증가
+                if (score % 5 === 0) {
+                    clickIncrement++;
+                }
+            }
+        });
+
+        // 이름 제출 후 리더보드에 추가
+        submitNameButton.addEventListener('click', () => {
+            const playerName = nameInput.value.trim();
+            if (playerName !== "") {
+                addToLeaderboard(playerName, score);
+                playerNameInput.style.display = 'none';
+                resetGame();
+            }
+        });
+
+        // 리더보드에 점수 추가하는 함수
+        function addToLeaderboard(player, score) {
+            leaderboard.push({ player, score });
+            leaderboard.sort((a, b) => b.score - a.score); // 점수 순으로 정렬
+            updateLeaderboard();
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard)); // 로컬 스토리지에 저장
+        }
+
+        // 리더보드를 업데이트하는 함수
+        function updateLeaderboard() {
+            leaderboardEntries.innerHTML = '';
+            leaderboard.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.classList.add('leaderboard-entry');
+                div.textContent = `${index + 1}. ${entry.player}: ${entry.score}`;
+                leaderboardEntries.appendChild(div);
+            });
+        }
+
+        // 게임 리셋 함수
+        function resetGame() {
+            score = 0;
+            timeLeft = 60;
+            clickIncrement = 1;
+            scoreDisplay.textContent = `Score: ${score}`;
+            timerDisplay.textContent = `Time left: 60s`;
+            clickButton.disabled = false;
+            startTimer();
+        }
+
+        // 페이지 로드 시 리더보드 업데이트 및 타이머 시작
+        updateLeaderboard();
+        startTimer();
+    </script>
+</body>
+</html>
